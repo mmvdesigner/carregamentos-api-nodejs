@@ -1,4 +1,4 @@
-// api/index.js - API Completa em arquivo único
+// api/index.js
 import mysql from "mysql2/promise";
 import crypto from "crypto";
 
@@ -62,8 +62,9 @@ async function validateToken(req, db) {
   const tokenHash = crypto.createHash("sha256").update(match[1]).digest("hex");
 
   const [rows] = await db.execute(
-    `SELECT usu_codigo, usu_nome FROM usuarios 
-     WHERE usu_api_token = ? AND usu_token_expires > NOW() AND usu_ativo = 1`,
+    `SELECT codigo AS usu_codigo, nome AS usu_nome 
+     FROM usuarios 
+     WHERE api_token = ? AND token_expires > NOW() AND ativo = 1`,
     [tokenHash]
   );
 
@@ -120,7 +121,7 @@ async function loginHandler(req, res, db) {
 
   try {
     const [rows] = await db.execute(
-      "SELECT usu_codigo, usu_nome, usu_senha FROM usuarios WHERE usu_login = ? AND usu_ativo = 1",
+      "SELECT codigo AS usu_codigo, nome AS usu_nome, senha AS usu_senha FROM usuarios WHERE login = ? AND ativo = 1",
       [login]
     );
 
@@ -147,7 +148,7 @@ async function loginHandler(req, res, db) {
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     await db.execute(
-      "UPDATE usuarios SET usu_api_token = ?, usu_token_expires = ? WHERE usu_codigo = ?",
+      "UPDATE usuarios SET api_token = ?, token_expires = ? WHERE codigo = ?",
       [
         tokenHash,
         expiresAt.toISOString().slice(0, 19).replace("T", " "),
@@ -177,7 +178,7 @@ async function getDadosHandler(req, res, db) {
     );
 
     const [clienteRows] = await db.execute(
-      "SELECT ent_codigo as id, ent_nome as nome FROM entidades WHERE ent_tipo = ? AND ent_ativo = 1 ORDER BY ent_nome",
+      "SELECT codigo AS id, nome FROM entidades WHERE tipo = ? AND ativo = 1 ORDER BY nome",
       ["CLIENTE"]
     );
 
