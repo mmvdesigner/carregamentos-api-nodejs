@@ -1,22 +1,8 @@
 {
   "name": "carregamentos-api",
   "version": "1.0.0",
-  "description": "API de Carregamentos convertida para Node.js",
-  "main": "api/index.js",
   "type": "module",
-  "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'No build step required'",
-    "start": "node api/index.js"
-  },
   "dependencies": {
-    "mysql2": "^3.6.5",
-    "formidable": "^3.5.1"
-  },
-  "devDependencies": {
-    "@vercel/node": "^3.0.12"
-  },
-  "engines": {
-    "node": ">=18.x"
+    "mysql2": "^3.6.5"
   }
 }
