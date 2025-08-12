@@ -1,21 +1,22 @@
 {
-  "name": "carregamentos-api-nodejs",
+  "name": "carregamentos-api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "API de Carregamentos convertida para Node.js",
+  "main": "api/index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vercel dev",
+    "build": "echo 'No build step required'",
+    "start": "node api/index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mmvdesigner/carregamentos-api-nodejs.git"
+  "dependencies": {
+    "mysql2": "^3.6.5",
+    "formidable": "^3.5.1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/mmvdesigner/carregamentos-api-nodejs/issues"
+  "devDependencies": {
+    "@vercel/node": "^3.0.12"
   },
-  "homepage": "https://github.com/mmvdesigner/carregamentos-api-nodejs#readme"
+  "engines": {
+    "node": ">=18.x"
+  }
 }
