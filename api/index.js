@@ -15,8 +15,7 @@ async function getDatabase() {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: process.env.DB_PORT || 3306,
-    acquireTimeout: 60000,
-    timeout: 60000,
+    // Removi acquireTimeout e timeout pois não são suportados pelo mysql2
   };
 
   dbConnection = await mysql.createConnection(config);
@@ -63,7 +62,7 @@ async function validateToken(req, db) {
 
   const [rows] = await db.execute(
     `SELECT codigo AS usu_codigo, nome AS usu_nome 
-     FROM usuarios 
+     FROM tbl_usuarios 
      WHERE api_token = ? AND token_expires > NOW() AND ativo = 1`,
     [tokenHash]
   );
@@ -121,7 +120,7 @@ async function loginHandler(req, res, db) {
 
   try {
     const [rows] = await db.execute(
-      "SELECT codigo AS usu_codigo, nome AS usu_nome, senha AS usu_senha FROM usuarios WHERE login = ? AND ativo = 1",
+      "SELECT codigo AS usu_codigo, nome AS usu_nome, senha AS usu_senha FROM tbl_usuarios WHERE login = ? AND ativo = 1",
       [login]
     );
 
@@ -148,7 +147,7 @@ async function loginHandler(req, res, db) {
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     await db.execute(
-      "UPDATE usuarios SET api_token = ?, token_expires = ? WHERE codigo = ?",
+      "UPDATE tbl_usuarios SET api_token = ?, token_expires = ? WHERE codigo = ?",
       [
         tokenHash,
         expiresAt.toISOString().slice(0, 19).replace("T", " "),
@@ -174,11 +173,11 @@ async function loginHandler(req, res, db) {
 async function getDadosHandler(req, res, db) {
   try {
     const [numeroRows] = await db.execute(
-      "SELECT COALESCE(MAX(car_numero), 0) + 1 as proximo FROM carregamentos"
+      "SELECT COALESCE(MAX(car_numero), 0) + 1 as proximo FROM tbl_carregamentos"
     );
 
     const [clienteRows] = await db.execute(
-      "SELECT codigo AS id, nome FROM entidades WHERE tipo = ? AND ativo = 1 ORDER BY nome",
+      "SELECT codigo AS id, nome FROM tbl_entidades WHERE tipo = ? AND ativo = 1 ORDER BY nome",
       ["CLIENTE"]
     );
 
@@ -217,7 +216,7 @@ async function salvarHeaderHandler(req, res, db) {
 
   try {
     const [result] = await db.execute(
-      `INSERT INTO carregamentos 
+      `INSERT INTO tbl_carregamentos 
        (car_numero, car_data, car_cliente_organizador, car_usuario_criacao, car_status) 
        VALUES (?, ?, ?, ?, 'EM ANDAMENTO')`,
       [numero, data, clienteOrganizadorId, user.usu_codigo]
@@ -265,7 +264,7 @@ async function salvarFilaHandler(req, res, db) {
     await db.execute("START TRANSACTION");
 
     const [filaResult] = await db.execute(
-      "INSERT INTO carregamento_filas (caf_carregamento, caf_cliente) VALUES (?, ?)",
+      "INSERT INTO tbl_carregamento_filas (caf_carregamento, caf_cliente) VALUES (?, ?)",
       [carregamentoId, clienteId]
     );
 
@@ -273,7 +272,7 @@ async function salvarFilaHandler(req, res, db) {
 
     for (const leitura of leituras) {
       await db.execute(
-        "INSERT INTO carregamento_leituras (cal_fila, cal_codigo_lido, cal_timestamp) VALUES (?, ?, ?)",
+        "INSERT INTO tbl_carregamento_leituras (cal_fila, cal_codigo_lido, cal_timestamp) VALUES (?, ?, ?)",
         [filaId, leitura.codigo, leitura.timestamp || new Date()]
       );
     }
@@ -315,7 +314,7 @@ async function finalizarHandler(req, res, db) {
 
   try {
     const [result] = await db.execute(
-      "UPDATE carregamentos SET car_status = ?, car_data_finalizacao = NOW() WHERE car_codigo = ? AND car_status = ?",
+      "UPDATE tbl_carregamentos SET car_status = ?, car_data_finalizacao = NOW() WHERE car_codigo = ? AND car_status = ?",
       ["FINALIZADO", carregamentoId, "EM ANDAMENTO"]
     );
 
