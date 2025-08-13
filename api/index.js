@@ -133,7 +133,10 @@ async function loginHandler(req, res, db) {
     }
 
     const user = rows[0];
-    const passwordHash = crypto.createHash("md5").update(senha).digest("hex");
+    const passwordHash = crypto
+      .createHash("sha256")
+      .update(senha)
+      .digest("hex");
 
     if (user.usu_senha !== passwordHash) {
       return res.status(401).json({
