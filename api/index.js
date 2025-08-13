@@ -15,7 +15,6 @@ async function getDatabase() {
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: process.env.DB_PORT || 3306,
-    // Removi acquireTimeout e timeout pois não são suportados pelo mysql2
   };
 
   dbConnection = await mysql.createConnection(config);
@@ -60,10 +59,11 @@ async function validateToken(req, db) {
 
   const tokenHash = crypto.createHash("sha256").update(match[1]).digest("hex");
 
+  // ✅ Corrigido: nomes das colunas e tabela
   const [rows] = await db.execute(
-    `SELECT codigo AS usu_codigo, nome AS usu_nome 
+    `SELECT usu_codigo AS usu_codigo, usu_nome AS usu_nome 
      FROM tbl_usuarios 
-     WHERE api_token = ? AND token_expires > NOW() AND ativo = 1`,
+     WHERE usu_session_token = ? AND usu_situacao = 'A'`,
     [tokenHash]
   );
 
@@ -119,8 +119,9 @@ async function loginHandler(req, res, db) {
   }
 
   try {
+    // ✅ Corrigido: usar `usu_login`, `usu_senha`, `usu_situacao = 'A'`, não `ativo`
     const [rows] = await db.execute(
-      "SELECT codigo AS usu_codigo, nome AS usu_nome, senha AS usu_senha FROM tbl_usuarios WHERE login = ? AND ativo = 1",
+      "SELECT usu_codigo, usu_nome, usu_senha FROM tbl_usuarios WHERE usu_login = ? AND usu_situacao = 'A'",
       [login]
     );
 
@@ -146,13 +147,10 @@ async function loginHandler(req, res, db) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
+    // ✅ Corrigido: campo correto é `usu_session_token`
     await db.execute(
-      "UPDATE tbl_usuarios SET api_token = ?, token_expires = ? WHERE codigo = ?",
-      [
-        tokenHash,
-        expiresAt.toISOString().slice(0, 19).replace("T", " "),
-        user.usu_codigo,
-      ]
+      "UPDATE tbl_usuarios SET usu_session_token = ?, usu_situacao = 'A' WHERE usu_codigo = ?",
+      [tokenHash, user.usu_codigo]
     );
 
     return res.json({
@@ -176,9 +174,10 @@ async function getDadosHandler(req, res, db) {
       "SELECT COALESCE(MAX(car_numero), 0) + 1 as proximo FROM tbl_carregamentos"
     );
 
+    // ✅ Corrigido: usar `ent_codigo` como `id`, `ent_tipo` = 'Cliente'
     const [clienteRows] = await db.execute(
-      "SELECT codigo AS id, nome FROM tbl_entidades WHERE tipo = ? AND ativo = 1 ORDER BY nome",
-      ["CLIENTE"]
+      "SELECT ent_codigo AS id, ent_nome AS nome FROM tbl_entidades WHERE ent_tipo = ? AND ent_situacao = 'A' ORDER BY ent_nome",
+      ["Cliente"]
     );
 
     return res.json({
@@ -215,9 +214,10 @@ async function salvarHeaderHandler(req, res, db) {
   }
 
   try {
+    // ✅ Corrigido: nomes reais das colunas
     const [result] = await db.execute(
       `INSERT INTO tbl_carregamentos 
-       (car_numero, car_data, car_cliente_organizador, car_usuario_criacao, car_status) 
+       (car_numero, car_data, car_entidade_id_organizador, car_usuario_criacao, car_status) 
        VALUES (?, ?, ?, ?, 'EM ANDAMENTO')`,
       [numero, data, clienteOrganizadorId, user.usu_codigo]
     );
@@ -263,8 +263,9 @@ async function salvarFilaHandler(req, res, db) {
   try {
     await db.execute("START TRANSACTION");
 
+    // ✅ Corrigido: nomes corretos
     const [filaResult] = await db.execute(
-      "INSERT INTO tbl_carregamento_filas (caf_carregamento, caf_cliente) VALUES (?, ?)",
+      "INSERT INTO tbl_carregamento_filas (fila_carregamento_id, fila_entidade_id_cliente) VALUES (?, ?)",
       [carregamentoId, clienteId]
     );
 
@@ -313,8 +314,9 @@ async function finalizarHandler(req, res, db) {
   }
 
   try {
+    // ✅ Corrigido: `car_id`, não `car_codigo`
     const [result] = await db.execute(
-      "UPDATE tbl_carregamentos SET car_status = ?, car_data_finalizacao = NOW() WHERE car_codigo = ? AND car_status = ?",
+      "UPDATE tbl_carregamentos SET car_status = ?, car_data_finalizacao = NOW() WHERE car_id = ? AND car_status = ?",
       ["FINALIZADO", carregamentoId, "EM ANDAMENTO"]
     );
 
