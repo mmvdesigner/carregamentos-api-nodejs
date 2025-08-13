@@ -174,7 +174,7 @@ async function getDadosHandler(req, res, db) {
     );
 
     const [clienteRows] = await db.execute(
-      "SELECT ent_codigo AS id, ent_nome AS nome FROM tbl_entidades WHERE ent_tipo_entidade = ? AND ent_situacao = 'A' ORDER BY ent_nome",
+      "SELECT ent_codigo AS id, ent_nome_fantasia AS nome FROM tbl_entidades WHERE ent_tipo_entidade = ? AND ent_situacao = 'A' ORDER BY ent_nome_fantasia",
       ["Cliente"]
     );
 
