@@ -169,25 +169,45 @@ async function loginHandler(req, res, db) {
 
 async function getDadosHandler(req, res, db) {
   try {
+    // Busca o próximo número de carregamento
     const [numeroRows] = await db.execute(
       "SELECT COALESCE(MAX(car_numero), 0) + 1 as proximo FROM tbl_carregamentos"
     );
 
-    const [clienteRows] = await db.execute(
-      "SELECT ent_codigo AS id, ent_nome_fantasia AS nome FROM tbl_entidades WHERE ent_tipo_entidade = ? AND ent_situacao = 'A' ORDER BY ent_nome_fantasia",
+    // Busca a lista completa de clientes com os campos necessários
+    const [clientes] = await db.execute(
+      `
+      SELECT 
+        ent_codigo,
+        ent_razao_social,
+        ent_nome_fantasia,
+        ent_codigo_interno 
+      FROM tbl_entidades 
+      WHERE ent_tipo_entidade = ? AND ent_situacao = 'A' 
+      ORDER BY ent_nome_fantasia
+    `,
       ["Cliente"]
     );
+
+    // Mapeia para um array de objetos com estrutura limpa
+    const clientesFormatados = clientes.map((cliente) => ({
+      id: cliente.ent_codigo,
+      razaoSocial: cliente.ent_razao_social,
+      nomeFantasia: cliente.ent_nome_fantasia,
+      codigoInterno: cliente.ent_codigo_interno,
+    }));
 
     return res.json({
       success: true,
       proximoNumero: numeroRows[0].proximo,
-      clientes: clienteRows,
+      clientes: clientesFormatados,
     });
   } catch (error) {
     console.error("Error getting dados:", error);
     return res.status(500).json({
       success: false,
       message: "Erro ao obter dados",
+      error: error.message,
     });
   }
 }
