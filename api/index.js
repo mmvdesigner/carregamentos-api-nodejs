@@ -169,12 +169,12 @@ async function loginHandler(req, res, db) {
 
 async function getDadosHandler(req, res, db) {
   try {
-    // Busca o próximo número de carregamento
+    // 1. Buscar próximo número de carregamento
     const [numeroRows] = await db.execute(
       "SELECT COALESCE(MAX(car_numero), 0) + 1 as proximo FROM tbl_carregamentos"
     );
 
-    // Busca a lista completa de clientes com os campos necessários
+    // 2. Buscar todos os clientes ativos com os campos necessários
     const [clientes] = await db.execute(
       `
       SELECT 
@@ -183,20 +183,21 @@ async function getDadosHandler(req, res, db) {
         ent_nome_fantasia,
         ent_codigo_interno 
       FROM tbl_entidades 
-      WHERE ent_tipo_entidade = ? AND ent_situacao = 'A' 
+      WHERE ent_tipo_entidade = ? AND ent_situacao = 'A'
       ORDER BY ent_nome_fantasia
     `,
       ["Cliente"]
     );
 
-    // Mapeia para um array de objetos com estrutura limpa
-    const clientesFormatados = clientes.map((cliente) => ({
-      id: cliente.ent_codigo,
-      razaoSocial: cliente.ent_razao_social,
-      nomeFantasia: cliente.ent_nome_fantasia,
-      codigoInterno: cliente.ent_codigo_interno,
+    // 🔁 Mapear para estrutura limpa
+    const clientesFormatados = clientes.map((c) => ({
+      id: c.ent_codigo,
+      razaoSocial: c.ent_razao_social,
+      nomeFantasia: c.ent_nome_fantasia,
+      codigoInterno: c.ent_codigo_interno,
     }));
 
+    // ✅ Retornar resposta correta
     return res.json({
       success: true,
       proximoNumero: numeroRows[0].proximo,
