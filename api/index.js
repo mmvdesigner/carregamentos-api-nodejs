@@ -235,7 +235,7 @@ async function salvarHeaderHandler(req, res, db) {
   try {
     const [result] = await db.execute(
       `INSERT INTO tbl_carregamentos 
-       (car_numero, car_data, car_entidade_id_organizador, car_usuario_criacao, car_status) 
+       (car_numero, car_data, car_entidade_id_organizador, car_usuario_id_responsavel, car_status) 
        VALUES (?, ?, ?, ?, 'EM ANDAMENTO')`,
       [numero, data, clienteOrganizadorId, user.usu_codigo]
     );
